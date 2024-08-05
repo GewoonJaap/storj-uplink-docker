@@ -44,6 +44,7 @@ jobs:
             echo "::set-output name=new_release::true"
             latest_release=$(curl -s https://api.github.com/repos/${{ env.STORJ_REPO }}/releases/latest | jq -r .tag_name)
             echo "::set-output name=latest_release::${latest_release}"
+            echo $latest_release > ${{ env.LAST_RELEASE_FILE }}
           else
             last_release=$(cat ${{ env.LAST_RELEASE_FILE }} 2>/dev/null || echo "")
             latest_release=$(curl -s https://api.github.com/repos/${{ env.STORJ_REPO }}/releases/latest | jq -r .tag_name)
