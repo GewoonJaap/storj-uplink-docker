@@ -86,9 +86,12 @@ jobs:
 
       - name: Commit last release
         if: steps.check_release.outputs.new_release == 'true'
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git add ${{ env.LAST_RELEASE_FILE }}
-          git commit -m "Update last release to ${{ steps.check_release.outputs.latest_release }}"
-          git push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update last release to ${{ steps.check_release.outputs.latest_release }}"
+          branch: main
+          file_pattern: ${{ env.LAST_RELEASE_FILE }}
+          commit_user_name: "github-actions"
+          commit_user_email: "github-actions@github.com"
+          commit_author: "github-actions <github-actions@github.com>"
+          skip_dirty_check: true
