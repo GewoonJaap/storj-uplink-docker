@@ -1,0 +1,91 @@
+name: Create and publish a Docker image
+
+on:
+  workflow_dispatch: # Manual trigger
+  schedule:
+    - cron: '0 0 * * *' # Runs once a day at midnight
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  STORJ_REPO: storj/storj
+  LAST_RELEASE_FILE: .last_release
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for new release
+        id: check_release
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "::set-output name=new_release::true"
+            latest_release=$(curl -s https://api.github.com/repos/${{ env.STORJ_REPO }}/releases/latest | jq -r .tag_name)
+            echo "::set-output name=latest_release::${latest_release}"
+          else
+            last_release=$(cat ${{ env.LAST_RELEASE_FILE }} 2>/dev/null || echo "")
+            latest_release=$(curl -s https://api.github.com/repos/${{ env.STORJ_REPO }}/releases/latest | jq -r .tag_name)
+            echo "Last release: $last_release"
+            echo "Latest release: $latest_release"
+            if [ "$last_release" != "$latest_release" ]; then
+              echo "New release found: $latest_release"
+              echo $latest_release > ${{ env.LAST_RELEASE_FILE }}
+              echo "::set-output name=new_release::true"
+              echo "::set-output name=latest_release::${latest_release}"
+            else
+              echo "No new release found"
+              echo "::set-output name=new_release::false"
+            fi
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        id: push
+        if: steps.check_release.outputs.new_release == 'true'
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.check_release.outputs.latest_release }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+
+      - name: Commit last release
+        if: steps.check_release.outputs.new_release == 'true'
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add ${{ env.LAST_RELEASE_FILE }}
+          git commit -m "Update last release to ${{ steps.check_release.outputs.latest_release }}"
+          git push
