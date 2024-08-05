@@ -69,8 +69,8 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.check_release.outputs.latest_release }}
+            latest
+            ${{ steps.check_release.outputs.latest_release }}
 
       - name: Build and push Docker image
         id: push
