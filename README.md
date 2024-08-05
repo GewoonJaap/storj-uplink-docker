@@ -24,7 +24,7 @@ To run the Docker container and interact with the Storj Uplink CLI, use the foll
 Check Uplink Version
 To check the version of the Uplink CLI, run:
 ```sh
-docker run --rm storj-uplink-cli:latest version
+docker run --rm ghcr.io/gewoonjaap/storj-uplink-docker:latest version
 ```
 
 Other Uplink CLI commands can be run in a similar manner. All the commands can be found here: https://storj.dev/dcs/api/uplink-cli
