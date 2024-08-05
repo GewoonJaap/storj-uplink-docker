@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository.toLowerCase() }}
   STORJ_REPO: storj/storj
   LAST_RELEASE_FILE: .last_release
 
