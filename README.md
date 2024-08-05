@@ -1,4 +1,5 @@
 # Storj Uplink CLI Docker Container
+[![Create and publish a Docker image](https://github.com/GewoonJaap/storj-uplink-docker/actions/workflows/publish.yml/badge.svg)](https://github.com/GewoonJaap/storj-uplink-docker/actions/workflows/publish.yml)
 
 This repository provides a Docker container for the Storj Uplink CLI, allowing you to interact with the Storj network using the Uplink command-line interface.
 
